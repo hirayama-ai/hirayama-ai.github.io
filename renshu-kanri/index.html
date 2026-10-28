@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>研修用 実習生管理（架空）</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1f2a44; --muted:#5b6478; --line:#d9dde6; --soft:#f4f6fa;
+    --accent:#1f4fa3; --accent-soft:#e8eefb; --warn:#b42318; --warn-soft:#fdecea;
+    --ok:#1d7a46; --ok-soft:#e6f4ec; --caution:#8a5a00; --caution-soft:#fff4dc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.6}
+  .banner{background:var(--caution-soft);color:var(--caution);border-bottom:1px solid #f0d9a8;padding:8px 16px;font-size:14px;font-weight:600;text-align:center}
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+  header h1{font-size:18px;margin:0}
+  header .who{font-size:14px;color:var(--muted)}
+  nav{display:flex;flex-wrap:wrap;gap:4px;padding:8px 16px;border-bottom:1px solid var(--line);background:var(--soft)}
+  nav a{padding:6px 12px;border-radius:6px;color:var(--fg);text-decoration:none;font-size:15px}
+  nav a.active{background:var(--accent);color:#fff}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  h2{font-size:20px;margin:8px 0 12px}
+  h3{font-size:16px;margin:20px 0 8px}
+  p.note{color:var(--muted);font-size:14px;margin:4px 0 12px}
+  .card{border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px;background:#fff}
+  .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px}
+  .toolbar label{display:flex;flex-direction:column;font-size:13px;color:var(--muted);gap:2px}
+  input,select,textarea{font:inherit;padding:6px 8px;border:1px solid #b9c0cf;border-radius:6px;background:#fff;color:var(--fg)}
+  textarea{width:100%;min-height:90px}
+  button{font:inherit;padding:7px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+  button.secondary{background:#fff;color:var(--accent)}
+  button.danger{background:#fff;color:var(--warn);border-color:var(--warn)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:760px}
+  th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--soft);font-weight:600;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  .tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+  .t-ok{background:var(--ok-soft);color:var(--ok)}
+  .t-ng{background:var(--warn-soft);color:var(--warn)}
+  .t-wait{background:var(--caution-soft);color:var(--caution)}
+  .t-none{background:var(--soft);color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+  .field label{font-size:13px;color:var(--muted)}
+  dl.kv{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;margin:0}
+  dl.kv dt{color:var(--muted);font-size:14px}
+  dl.kv dd{margin:0}
+  .msg{padding:10px 12px;border-radius:6px;margin:10px 0;font-size:14px}
+  .msg.ok{background:var(--ok-soft);color:var(--ok)}
+  .msg.ng{background:var(--warn-soft);color:var(--warn)}
+  .msg.info{background:var(--accent-soft);color:var(--accent)}
+  .login{max-width:380px;margin:40px auto}
+  footer{max-width:1100px;margin:24px auto;padding:0 16px 32px;color:var(--muted);font-size:13px}
+  a{color:var(--accent)}
+  @media (max-width:600px){ dl.kv{grid-template-columns:1fr} header h1{font-size:16px} }
+</style>
+</head>
+<body>
+<div class="banner" role="note">これは研修用の架空サイトです。登場する人物・会社・数値はすべて架空で、実在の人物・団体・システムとは関係ありません。</div>
+<header>
+  <h1>研修用 実習生管理（架空）</h1>
+  <div class="who" id="who"></div>
+</header>
+<nav id="nav" aria-label="メニュー"></nav>
+<main id="app" tabindex="-1"></main>
+<footer>
+  データはこのブラウザの中にだけ保存されます。ほかの受講者には影響しません。最初の状態に戻すときは「練習データを初期化」を押してください。
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- 架空データ（日付は「今日」からの日数で持つ） ---------- */
+  var COMPANIES = ["みどり精工（架空）","あおば食品（架空）","ひかり縫製（架空）","やまと建設（架空）"];
+  var DOC_TYPES = ["雇用契約書","基礎データ（Excel）","申請書類の出力","実習機構への申請","入管への申請","実習生保険","試験の申込"];
+
+  var SEED = [
+    {id:"P001",name:"グエン・ティ・ラン",country:"ベトナム",company:0,stage:"1年目",expiry:42,next:"2年目の申請（資格変更）",visit:9,phone:"090-0000-0101",insurance:"加入済み",exam:"申込済み",memo:"",docs:["済","済","済","済","未","済","済"]},
+    {id:"P002",name:"チャン・ヴァン・ミン",country:"ベトナム",company:0,stage:"1年目",expiry:118,next:"試験の申込",visit:23,phone:"090-0000-0102",insurance:"加入済み",exam:"未申込",memo:"",docs:["済","済","済","済","済","済","未"]},
+    {id:"P003",name:"シティ・ヌルハリザ",country:"インドネシア",company:1,stage:"2年目",expiry:27,next:"3年目の申請（期間更新）",visit:5,phone:"090-0000-0103",insurance:"加入済み",exam:"合格",memo:"受入企業から書類の到着が遅れると連絡あり",docs:["済","未","未","未","未","済","済"]},
+    {id:"P004",name:"アグス・プラタマ",country:"インドネシア",company:1,stage:"2年目",expiry:205,next:"なし（次回訪問のみ）",visit:40,phone:"090-0000-0104",insurance:"加入済み",exam:"合格",memo:"",docs:["済","済","済","済","済","済","済"]},
+    {id:"P005",name:"マリア・サントス",country:"フィリピン",company:2,stage:"3年目",expiry:63,next:"期間更新の準備",visit:12,phone:"090-0000-0105",insurance:"更新手続き中",exam:"合格",memo:"",docs:["済","済","未","未","未","確認中","済"]},
+    {id:"P006",name:"ジョン・レイエス",country:"フィリピン",company:2,stage:"1年目",expiry:310,next:"入国後講習",visit:16,phone:"090-0000-0106",insurance:"未加入",exam:"未申込",memo:"入国日の調整中",docs:["済","済","済","済","済","未","未"]},
+    {id:"P007",name:"ファム・トゥ・ハ",country:"ベトナム",company:3,stage:"3年目",expiry:15,next:"3年目の申請（期間更新）",visit:3,phone:"090-0000-0107",insurance:"加入済み",exam:"合格",memo:"申請書類の出力済み。紙で提出予定",docs:["済","済","済","未","未","済","済"]},
+    {id:"P008",name:"ブディ・サントソ",country:"インドネシア",company:3,stage:"1年目",expiry:88,next:"2年目の申請（資格変更）",visit:30,phone:"090-0000-0108",insurance:"加入済み",exam:"申込済み",memo:"",docs:["済","確認中","未","未","未","済","済"]}
+  ];
+
+  var LOGIN_ID = "renshu", LOGIN_PW = "hatch2026";
+  var KEY = "practice-trainee-admin-v1";
+
+  /* ---------- 保存（使えないときはメモリだけで動く） ---------- */
+  var memory = null;
+  function store(){
+    try { var raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw); } catch(e){}
+    return memory;
+  }
+  function save(state){
+    memory = state;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){}
+  }
+  function freshState(){
+    return {
+      trainees: SEED.map(function(t){ return JSON.parse(JSON.stringify(t)); }),
+      history: [], sent: [], loggedIn: false
+    };
+  }
+  var state = store() || freshState();
+  if (!state.trainees) state = freshState();
+
+  /* ---------- 日付 ---------- */
+  function dateFromOffset(days){
+    var d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+days); return d;
+  }
+  function fmt(d){
+    return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0");
+  }
+  function iso(d){
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  function offsetFromIso(s){
+    var p = s.split("-"); var d = new Date(+p[0], +p[1]-1, +p[2]);
+    var t = new Date(); t.setHours(0,0,0,0);
+    return Math.round((d - t)/86400000);
+  }
+  function now(){ var d=new Date(); return fmt(d)+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+
+  /* ---------- 共通 ---------- */
+  var app = document.getElementById("app");
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+  function find(id){ for (var i=0;i<state.trainees.length;i++) if (state.trainees[i].id===id) return state.trainees[i]; return null; }
+  function docTag(v){
+    var c = v==="済"?"t-ok":(v==="未"?"t-ng":(v==="確認中"?"t-wait":"t-none"));
+    var label = v==="済"?"済み":(v==="未"?"未提出":v);
+    return '<span class="tag '+c+'">'+esc(label)+'</span>';
+  }
+  function expiryTag(days){
+    if (days < 0) return '<span class="tag t-ng">期限切れ</span>';
+    if (days <= 30) return '<span class="tag t-ng">30日以内</span>';
+    if (days <= 90) return '<span class="tag t-wait">90日以内</span>';
+    return '';
+  }
+
+  var ROUTES = [
+    {hash:"#/list", label:"実習生一覧"},
+    {hash:"#/docs", label:"書類チェック"},
+    {hash:"#/contact", label:"受入企業への連絡"},
+    {hash:"#/history", label:"変更・送信の記録"}
+  ];
+
+  function renderChrome(route){
+    var nav = document.getElementById("nav");
+    var who = document.getElementById("who");
+    if (!state.loggedIn){ nav.innerHTML = ""; who.textContent = "ログインしていません"; return; }
+    nav.innerHTML = ROUTES.map(function(r){
+      return '<a href="'+r.hash+'"'+(route.indexOf(r.hash)===0?' class="active" aria-current="page"':'')+'>'+r.label+'</a>';
+    }).join("") + '<a href="#/reset">練習データを初期化</a><a href="#/logout">ログアウト</a>';
+    who.textContent = "ログイン中：練習用アカウント";
+  }
+
+  /* ---------- 画面 ---------- */
+  function viewLogin(){
+    app.innerHTML =
+      '<div class="login card">'+
+      '<h2>ログイン</h2>'+
+      '<p class="note">練習用のログインです。IDとパスワードは研修資料に書いてあります。</p>'+
+      '<div id="loginForm" role="form" aria-label="ログイン">'+
+      '<div class="field"><label for="uid">ログインID</label><input id="uid" name="uid" autocomplete="off"></div>'+
+      '<div class="field"><label for="pw">パスワード</label><input id="pw" name="pw" type="password" autocomplete="off"></div>'+
+      '<button type="button" id="loginBtn">ログインする</button>'+
+      '<div id="loginMsg" role="alert"></div>'+
+      '</div></div>';
+    function onEnter(ev){ if (ev.key==="Enter"){ ev.preventDefault(); doLogin(); } }
+    document.getElementById("uid").addEventListener("keydown", onEnter);
+    document.getElementById("pw").addEventListener("keydown", onEnter);
+    document.getElementById("loginBtn").addEventListener("click", doLogin);
+    function doLogin(){
+      // 全角入力（日本語入力のまま打った場合）や大文字・前後の空白も受け付ける
+      function norm(s){ s = String(s||""); try { s = s.normalize("NFKC"); } catch(e){} return s.replace(/\s+/g,"").toLowerCase(); }
+      var u = norm(document.getElementById("uid").value), p = norm(document.getElementById("pw").value);
+      if (u===LOGIN_ID && p===LOGIN_PW){
+        state.loggedIn = true; save(state);
+        go("#/list");
+      }
+      else document.getElementById("loginMsg").innerHTML = '<div class="msg ng">IDまたはパスワードが違います。もう一度入力してください。</div>';
+    }
+  }
+
+  function viewList(){
+    var q = (sessionGet("q")||""), st = (sessionGet("stage")||""), co = (sessionGet("company")||"");
+    var rows = state.trainees.filter(function(t){
+      if (st && t.stage!==st) return false;
+      if (co!=="" && String(t.company)!==co) return false;
+      if (q && (t.id+t.name+t.country+COMPANIES[t.company]).indexOf(q)<0) return false;
+      return true;
+    });
+    app.innerHTML =
+      '<h2>実習生一覧</h2>'+
+      '<p class="note">管理番号を押すと、詳しい情報と編集画面が開きます。在留期限は今日の日付から自動で計算しています。</p>'+
+      '<div class="toolbar">'+
+        '<label for="fq">キーワード<input id="fq" value="'+esc(q)+'" placeholder="氏名・会社名など"></label>'+
+        '<label for="fs">段階<select id="fs"><option value="">すべて</option>'+["1年目","2年目","3年目"].map(function(s){return '<option'+(s===st?' selected':'')+'>'+s+'</option>';}).join("")+'</select></label>'+
+        '<label for="fc">受入企業<select id="fc"><option value="">すべて</option>'+COMPANIES.map(function(c,i){return '<option value="'+i+'"'+(String(i)===co?' selected':'')+'>'+esc(c)+'</option>';}).join("")+'</select></label>'+
+        '<button type="button" class="secondary" id="clearF">条件をクリア</button>'+
+      '</div>'+
+      '<p class="note" id="count">'+rows.length+'件を表示中（全'+state.trainees.length+'件）</p>'+
+      '<div class="table-wrap"><table id="traineeTable"><caption class="note" style="text-align:left;padding:8px 10px">実習生一覧（架空）</caption><thead><tr>'+
+        '<th scope="col">管理番号</th><th scope="col">氏名（架空）</th><th scope="col">国籍</th><th scope="col">受入企業</th><th scope="col">段階</th><th scope="col">在留期限</th><th scope="col">次の手続き</th><th scope="col">次回訪問日</th><th scope="col">未提出の書類</th>'+
+      '</tr></thead><tbody>'+
+      rows.map(function(t){
+        var missing = t.docs.reduce(function(n,v){return n+(v==="未"?1:0);},0);
+        return '<tr><td><a href="#/detail/'+t.id+'">'+t.id+'</a></td><td>'+esc(t.name)+'</td><td>'+esc(t.country)+'</td><td>'+esc(COMPANIES[t.company])+'</td><td>'+t.stage+'</td>'+
+          '<td>'+fmt(dateFromOffset(t.expiry))+' '+expiryTag(t.expiry)+'</td><td>'+esc(t.next)+'</td><td>'+fmt(dateFromOffset(t.visit))+'</td><td>'+(missing?missing+'件':'なし')+'</td></tr>';
+      }).join("")+
+      '</tbody></table></div>';
+    function bind(id,key){ document.getElementById(id).addEventListener(id==="fq"?"input":"change",function(e){ sessionSet(key,e.target.value); viewList(); if(id==="fq"){var el=document.getElementById("fq"); el.focus(); el.setSelectionRange(el.value.length,el.value.length);} }); }
+    bind("fq","q"); bind("fs","stage"); bind("fc","company");
+    document.getElementById("clearF").addEventListener("click",function(){ sessionSet("q",""); sessionSet("stage",""); sessionSet("company",""); viewList(); });
+  }
+
+  var filters = {};
+  function sessionGet(k){ return filters[k]; }
+  function sessionSet(k,v){ filters[k]=v; }
+
+  function viewDetail(id){
+    var t = find(id);
+    if (!t){ app.innerHTML = '<h2>見つかりません</h2><p>管理番号 '+esc(id)+' のデータはありません。</p><p><a href="#/list">一覧へ戻る</a></p>'; return; }
+    app.innerHTML =
+      '<p><a href="#/list">← 実習生一覧へ戻る</a></p>'+
+      '<h2>'+t.id+'　'+esc(t.name)+'</h2>'+
+      '<div class="grid">'+
+        '<div class="card"><h3 style="margin-top:0">基本情報（変更できません）</h3><dl class="kv">'+
+          '<dt>管理番号</dt><dd>'+t.id+'</dd><dt>氏名（架空）</dt><dd>'+esc(t.name)+'</dd><dt>国籍</dt><dd>'+esc(t.country)+'</dd>'+
+          '<dt>受入企業</dt><dd>'+esc(COMPANIES[t.company])+'</dd><dt>段階</dt><dd>'+t.stage+'</dd>'+
+          '<dt>在留期限</dt><dd>'+fmt(dateFromOffset(t.expiry))+' '+expiryTag(t.expiry)+'</dd><dt>次の手続き</dt><dd>'+esc(t.next)+'</dd>'+
+        '</dl></div>'+
+        '<div class="card"><h3 style="margin-top:0">書類の状況</h3><dl class="kv">'+
+          DOC_TYPES.map(function(d,i){return '<dt>'+d+'</dt><dd>'+docTag(t.docs[i])+'</dd>';}).join("")+
+        '</dl></div>'+
+      '</div>'+
+      '<div id="editForm" class="card" role="form" aria-label="編集">'+
+        '<h3 style="margin-top:0">編集できる項目</h3>'+
+        '<p class="note">変更したら「変更を保存する」を押してください。保存した内容は「変更・送信の記録」に残ります。</p>'+
+        '<div class="grid">'+
+          '<div class="field"><label for="phone">連絡先電話番号（架空）</label><input id="phone" name="phone" value="'+esc(t.phone)+'"></div>'+
+          '<div class="field"><label for="visit">次回訪問日</label><input id="visit" name="visit" type="date" value="'+iso(dateFromOffset(t.visit))+'"></div>'+
+          '<div class="field"><label for="insurance">実習生保険</label><select id="insurance" name="insurance">'+["加入済み","更新手続き中","未加入","解約"].map(function(o){return '<option'+(o===t.insurance?' selected':'')+'>'+o+'</option>';}).join("")+'</select></div>'+
+          '<div class="field"><label for="exam">試験</label><select id="exam" name="exam">'+["未申込","申込済み","合格","不合格"].map(function(o){return '<option'+(o===t.exam?' selected':'')+'>'+o+'</option>';}).join("")+'</select></div>'+
+        '</div>'+
+        '<div class="field"><label for="memo">担当者メモ</label><textarea id="memo" name="memo">'+esc(t.memo)+'</textarea></div>'+
+        '<button type="button" id="saveBtn">変更を保存する</button>'+
+        '<div id="saveMsg" role="status"></div>'+
+      '</div>';
+    document.getElementById("saveBtn").addEventListener("click", function(){
+      var before = {phone:t.phone, visit:fmt(dateFromOffset(t.visit)), insurance:t.insurance, exam:t.exam, memo:t.memo};
+      var vIso = document.getElementById("visit").value;
+      var after = {
+        phone: document.getElementById("phone").value.trim(),
+        visit: vIso ? fmt(dateFromOffset(offsetFromIso(vIso))) : before.visit,
+        insurance: document.getElementById("insurance").value,
+        exam: document.getElementById("exam").value,
+        memo: document.getElementById("memo").value
+      };
+      var labels = {phone:"電話番号",visit:"次回訪問日",insurance:"実習生保険",exam:"試験",memo:"担当者メモ"};
+      var changes = [];
+      Object.keys(labels).forEach(function(k){ if (before[k]!==after[k]) changes.push(labels[k]+"：「"+(before[k]||"（空欄）")+"」→「"+(after[k]||"（空欄）")+"」"); });
+      if (!changes.length){ document.getElementById("saveMsg").innerHTML = '<div class="msg info">変更はありません。</div>'; return; }
+      t.phone = after.phone; if (vIso) t.visit = offsetFromIso(vIso); t.insurance = after.insurance; t.exam = after.exam; t.memo = after.memo;
+      state.history.unshift({at:now(), id:t.id, text:changes.join(" ／ ")});
+      save(state);
+      document.getElementById("saveMsg").innerHTML = '<div class="msg ok">保存しました（'+changes.length+'項目）。</div>';
+    });
+  }
+
+  function viewDocs(){
+    app.innerHTML =
+      '<h2>書類チェック</h2>'+
+      '<p class="note">全員の書類の提出状況です。「未提出」と「確認中」が対応の必要な書類です。</p>'+
+      '<div class="table-wrap"><table id="docTable"><caption class="note" style="text-align:left;padding:8px 10px">書類の提出状況（架空）</caption><thead><tr><th scope="col">管理番号</th><th scope="col">氏名（架空）</th><th scope="col">受入企業</th>'+
+      DOC_TYPES.map(function(d){return '<th scope="col">'+d+'</th>';}).join("")+'</tr></thead><tbody>'+
+      state.trainees.map(function(t){
+        return '<tr><td><a href="#/detail/'+t.id+'">'+t.id+'</a></td><td>'+esc(t.name)+'</td><td>'+esc(COMPANIES[t.company])+'</td>'+t.docs.map(docTag).map(function(x){return '<td>'+x+'</td>';}).join("")+'</tr>';
+      }).join("")+'</tbody></table></div>';
+  }
+
+  function viewContact(){
+    app.innerHTML =
+      '<h2>受入企業への連絡</h2>'+
+      '<p class="note">練習用の送信画面です。「送信する」を押しても、実際にはどこにも届きません。送信前に、内容を人が確認したことのチェックが必要です。</p>'+
+      '<div id="contactForm" class="card" role="form" aria-label="連絡">'+
+        '<div class="field"><label for="to">宛先（受入企業）</label><select id="to" name="to">'+COMPANIES.map(function(c,i){return '<option value="'+i+'">'+esc(c)+'</option>';}).join("")+'</select></div>'+
+        '<div class="field"><label for="subject">件名</label><input id="subject" name="subject"></div>'+
+        '<div class="field"><label for="body">本文</label><textarea id="body" name="body" style="min-height:160px"></textarea></div>'+
+        '<div class="field" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="checked"><label for="checked" style="font-size:15px;color:var(--fg)">内容を担当者が確認しました（宛先・氏名・日付・書類名）</label></div>'+
+        '<button type="button" id="sendBtn" disabled>送信する</button>'+
+        '<div id="sendMsg" role="status"></div>'+
+      '</div>';
+    var cb = document.getElementById("checked"), btn = document.getElementById("sendBtn");
+    cb.addEventListener("change", function(){ btn.disabled = !cb.checked; });
+    btn.addEventListener("click", function(){
+      var subj = document.getElementById("subject").value.trim(), body = document.getElementById("body").value.trim();
+      if (!subj || !body){ document.getElementById("sendMsg").innerHTML = '<div class="msg ng">件名と本文を入れてください。</div>'; return; }
+      state.sent.unshift({at:now(), to:COMPANIES[+document.getElementById("to").value], subject:subj, body:body});
+      save(state);
+      document.getElementById("subject").value=""; document.getElementById("body").value=""; document.getElementById("to").selectedIndex=0; cb.checked=false; btn.disabled = true;
+      document.getElementById("sendMsg").innerHTML = '<div class="msg ok">送信の練習が完了しました（実際には送信されていません）。「変更・送信の記録」で確認できます。</div>';
+    });
+  }
+
+  function viewHistory(){
+    app.innerHTML =
+      '<h2>変更・送信の記録</h2>'+
+      '<p class="note">このサイトで保存した変更と、送信の練習の記録です。AIに操作を任せたあと、ここで何が変わったかを確かめます。</p>'+
+      '<h3>データの変更</h3>'+
+      (state.history.length ? '<div class="table-wrap"><table><thead><tr><th scope="col">日時</th><th scope="col">管理番号</th><th scope="col">変更内容</th></tr></thead><tbody>'+
+        state.history.map(function(h){return '<tr><td>'+esc(h.at)+'</td><td>'+esc(h.id)+'</td><td>'+esc(h.text)+'</td></tr>';}).join("")+'</tbody></table></div>' : '<p class="note">まだ変更はありません。</p>')+
+      '<h3>送信の練習</h3>'+
+      (state.sent.length ? '<div class="table-wrap"><table><thead><tr><th scope="col">日時</th><th scope="col">宛先</th><th scope="col">件名</th><th scope="col">本文</th></tr></thead><tbody>'+
+        state.sent.map(function(s){return '<tr><td>'+esc(s.at)+'</td><td>'+esc(s.to)+'</td><td>'+esc(s.subject)+'</td><td style="white-space:pre-wrap">'+esc(s.body)+'</td></tr>';}).join("")+'</tbody></table></div>' : '<p class="note">まだ送信の練習はありません。</p>');
+  }
+
+  function viewReset(){
+    app.innerHTML =
+      '<h2>練習データを初期化</h2><div class="card"><p>変更した内容と記録をすべて消して、最初の状態に戻します。</p>'+
+      '<button class="danger" id="doReset">初期化する</button> <a href="#/list" style="margin-left:12px">やめる</a></div>';
+    document.getElementById("doReset").addEventListener("click", function(){
+      var keep = state.loggedIn; state = freshState(); state.loggedIn = keep; save(state); filters = {};
+      app.innerHTML = '<div class="msg ok">最初の状態に戻しました。</div><p><a href="#/list">実習生一覧へ</a></p>';
+    });
+  }
+
+  /* ---------- ルーター ---------- */
+  /* 画面の切り替え。プレビュー画面などでURLの#が変えられない環境でも動くよう、
+     今の画面を変数でも持つ */
+  var current = location.hash || "#/list";
+  function go(h){
+    current = h;
+    try { if (location.hash !== h) history.replaceState(null, "", h); } catch(e){}
+    render(h);
+  }
+  function route(){ go(location.hash || current || "#/list"); }
+  document.addEventListener("click", function(e){
+    var a = e.target.closest ? e.target.closest('a[href^="#/"]') : null;
+    if (!a) return;
+    e.preventDefault();
+    try { history.pushState(null, "", a.getAttribute("href")); } catch(err){}
+    go(a.getAttribute("href"));
+  });
+  window.addEventListener("popstate", function(){ if (location.hash) go(location.hash); });
+  function render(h){
+    if (h === "#/logout"){ state.loggedIn = false; save(state); return go("#/login"); }
+    if (!state.loggedIn && h !== "#/login") return go("#/login");
+    if (state.loggedIn && h === "#/login") return go("#/list");
+    renderChrome(h);
+    if (h === "#/login") viewLogin();
+    else if (h.indexOf("#/detail/")===0) viewDetail(decodeURIComponent(h.slice(9)));
+    else if (h === "#/docs") viewDocs();
+    else if (h === "#/contact") viewContact();
+    else if (h === "#/history") viewHistory();
+    else if (h === "#/reset") viewReset();
+    else viewList();
+    window.scrollTo(0,0);
+  }
+  window.addEventListener("hashchange", function(){ if (location.hash && location.hash !== current) go(location.hash); });
+  route();
+})();
+</script>
+</body>
+</html>
